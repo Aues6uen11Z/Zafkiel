@@ -8,7 +8,7 @@ version = "0.0.1"
 description = "A cross-platform UI automation framework based on Airtest and StarRailCopilot."
 authors = [{name = "Aues6uen11Z"}]
 readme = "README.md"
-license = { file = "LICENSE" }
+license = "GPL-3.0 license"
 requires-python = ">=3.6"
 dependencies = [
     "airtest >= 1.3.1",

@@ -16,8 +16,9 @@ class UI(API):
     and https://github.com/LmeSzinc/StarRailCopilot/blob/master/module/ui/switch.py
     """
 
-    ui_current: Page = None
-    popup_list = []
+    # Make ui_current mutable so that it can be shared among subclasses of the UI class.
+    ui_current: dict = {'page': None}
+    popup_list: list = []
 
     def ui_switch_appear(self, switch: Switch) -> bool:
         """
@@ -40,8 +41,8 @@ class UI(API):
         Returns:
             state name or 'unknown'.
         """
-        if self.ui_current.switch != switch:
-            logger.warning(f"{self.ui_current} does not have {switch}")
+        if self.ui_current['page'].switch != switch:
+            logger.warning(f"{self.ui_current['page']} does not have {switch}")
             return 'unknown'
 
         for data in switch.state_list:
@@ -87,7 +88,7 @@ class UI(API):
                 if page.check_button is None:
                     continue
                 if self.ui_page_appear(page=page):
-                    self.ui_current = page
+                    self.ui_current['page'] = page
                     return page
 
             # Unknown page but able to handle
@@ -117,6 +118,8 @@ class UI(API):
 
             # Warning
             if current == 'unknown':
+                if self.ui_additional():
+                    continue
                 if warning_show_timer.reached():
                     logger.warning(f'Unknown {switch.name} switch')
                     warning_show_timer.reset()
@@ -158,7 +161,7 @@ class UI(API):
 
             # Destination page
             if self.ui_page_appear(destination, timeout=0.5):
-                self.ui_current = destination
+                self.ui_current['page'] = destination
                 logger.debug(f'Page arrive: {destination}')
                 if state is not None:
                     self._set_state(destination.switch, state)
@@ -166,11 +169,11 @@ class UI(API):
 
             # Other pages
             clicked = False
-            for page in Page.iter_pages(start_page=self.ui_current):
+            for page in Page.iter_pages(start_page=self.ui_current['page']):
                 if page.parent is None or page.check_button is None:
                     continue
                 if self.exists(page.check_button):
-                    self.ui_current = page
+                    self.ui_current['page'] = page
                     button = page.links[page.parent]
                     self.touch(button)
                     logger.info(f'Page switch: {page} -> {page.parent}')
@@ -197,7 +200,7 @@ class UI(API):
         """
         self.ui_get_current_page()
 
-        if self.ui_current == destination:
+        if self.ui_current['page'] == destination:
             if state is not None:
                 if self.ui_get_current_state(destination.switch) == state.name:
                     logger.debug(f"Arrived at {destination}:{state.name}")
@@ -239,7 +242,7 @@ class UI(API):
             else:
                 current = letter(self.screenshot())
 
-            logger.info(f"{self.ui_current}: Index {current}")
+            logger.info(f"{self.ui_current['page']}: Index {current}")
             diff = index - current
             if diff == 0:
                 break
@@ -255,14 +258,15 @@ class UI(API):
                     self.touch(button)
                 retry.reset()
 
-    def get_popup_list(self, popup: list):
+    def get_popup_list(self, popups: list):
         """
         Get list from program, must be called before self.ui_additional().
 
         Args:
-            popup: list of handle popup functions
+            popups: list of handle popup functions
         """
-        self.popup_list = popup
+        for popup in popups:
+            self.popup_list.append(popup)
 
     def ui_additional(self) -> bool:
         """
@@ -279,4 +283,4 @@ class UI(API):
 
     def to_json(self) -> dict:
         # May not be actual current page
-        return {'ui_current': str(self.ui_current)}
+        return {'ui_current': str(self.ui_current['page'])}

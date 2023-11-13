@@ -114,3 +114,6 @@ class ImageTemplate(Template):
         x2 = screen_width / 2 + self.record_pos[0] * screen_width + self.width / 2 * ratio + border[1]
         y2 = screen_height / 2 + self.record_pos[1] * screen_width + self.height / 2 * ratio + border[0]
         return x1, y1, x2, y2
+
+
+Template = ImageTemplate

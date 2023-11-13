@@ -4,3 +4,5 @@ only modified to fit the project and:
 delete some methods
 add Ocr.ocr_match_keyword()
 """
+from zafkiel.ocr.keyword import Keyword
+from zafkiel.ocr.ocr import Ocr, Digit, DigitCounter, Duration, OcrResultButton

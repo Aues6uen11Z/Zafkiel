@@ -42,17 +42,18 @@ def loop_find(v, timeout=ST.FIND_TIMEOUT, threshold=None, interval=0.5, interval
             if threshold:
                 v.threshold = threshold
 
-            if v.keyword is not None:
-                ocr = cls(v)
-                if ocr.ocr_match_keyword(screen, ocr.button.keyword, mode=ocr_mode):
-                    match_pos = int((v.area[0] + v.area[2]) / 2), int((v.area[1] + v.area[3]) / 2)
-                    try_log_screen(screen)
-                    return match_pos
-            elif not v.rgb or is_color_similar(v.image, crop(screen, v.area)):
-                match_pos = v.match_in(screen)
-                if match_pos:
-                    try_log_screen(screen)
-                    return match_pos
+            if not v.rgb or is_color_similar(v.image, crop(screen, v.area)):
+                if v.keyword is not None:
+                    ocr = cls(v)
+                    if ocr.ocr_match_keyword(screen, ocr.button.keyword, mode=ocr_mode):
+                        match_pos = int((v.area[0] + v.area[2]) / 2), int((v.area[1] + v.area[3]) / 2)
+                        try_log_screen(screen)
+                        return match_pos
+                else:
+                    match_pos = v.match_in(screen)
+                    if match_pos:
+                        try_log_screen(screen)
+                        return match_pos
 
         if interval_func is not None:
             interval_func()

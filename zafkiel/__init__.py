@@ -8,7 +8,7 @@ from zafkiel.timer import Timer
 from zafkiel.report import simple_report
 from zafkiel.logger import logger
 
-__version__ = '0.0.3'
+__version__ = '0.0.4'
 
 
 G.register_custom_device(WindowsPlatform)

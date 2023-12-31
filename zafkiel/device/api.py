@@ -14,6 +14,7 @@ from pywinauto.findwindows import ElementNotFoundError
 
 from zafkiel.device.cv import loop_find
 from zafkiel.device.template import ImageTemplate as Template
+from zafkiel.logger import logger
 from zafkiel.exception import NotRunningError, ScriptError
 from zafkiel.ocr.ocr import Ocr
 from zafkiel.timer import Timer
@@ -215,8 +216,10 @@ class API:
 
         if touch_template:
             self.touch(touch_template, times, blind, ocr_mode=ocr_mode, cls=cls)
+            logger.info((f"Click{pos} {times} times" if times > 1 else f"Click{pos}") + f" @{touch_template.name}")
         else:
             self.touch(pos, times)
+            logger.info((f"Click{pos} {times} times" if times > 1 else f"Click{pos}") + f" @{rec_template.name}")
         return True
 
     @staticmethod
@@ -372,6 +375,7 @@ class API:
 
         G.DEVICE.swipe(pos1, pos2, **kwargs)
         delay_after_operation()
+        logger.info(f"Swipe {pos1} -> {pos2}")
         return pos1, pos2
 
     @staticmethod

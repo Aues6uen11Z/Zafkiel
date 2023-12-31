@@ -267,8 +267,8 @@ class Ocr:
 
         if results:
             logger.debug(f"<{self.name}> matched: {', '.join([str(result) for result in results])}")
-        else:
-            logger.debug(f"<{self.name}> matching failed")
+        # else:
+        #     logger.debug(f"<{self.name}> matching failed")
         return results
 
     def ocr_match_keyword(self, image, keyword_instance, direct_ocr=False, mode: int = OCR_EQUAL, threshold=0.75) \
@@ -303,8 +303,8 @@ class Ocr:
 
         if final_results:
             logger.debug(f"<{self.name}> matched: {', '.join([str(result) for result in final_results])}")
-        else:
-            logger.debug(f"<{self.name}> matching failed")
+        # else:
+        #     logger.debug(f"<{self.name}> matching failed")
         return final_results
 
 

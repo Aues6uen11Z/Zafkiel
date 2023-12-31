@@ -52,6 +52,9 @@ def loop_find(v, timeout=ST.FIND_TIMEOUT, threshold=None, interval=0.5, interval
                 else:
                     match_pos = v.match_in(screen)
                     if match_pos:
+                        cost_time = time.time() - start_time
+                        logger.debug(f"ImgRec <{v.name}> cost {cost_time:.2f}s: {match_pos}")
+
                         try_log_screen(screen)
                         return match_pos
 
@@ -59,6 +62,7 @@ def loop_find(v, timeout=ST.FIND_TIMEOUT, threshold=None, interval=0.5, interval
             interval_func()
 
         if (time.time() - start_time) > timeout:
+            logger.debug(f"<{v.name}> matching failed in {timeout}s")
             try_log_screen(screen)
             raise TargetNotFoundError(f'Picture {v} not found on screen')
         else:

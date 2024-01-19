@@ -1,6 +1,6 @@
 import os
 import time
-from typing import Type, Callable
+from typing import Tuple, Type, Callable, Union
 
 from airtest.core.api import snapshot, connect_device, init_device, set_current, shell, start_app, \
     clear_app, install, uninstall, wake, home, double_click, pinch, keyevent, text, sleep, find_all, \
@@ -126,24 +126,29 @@ class API:
     @staticmethod
     @logwrap
     def touch(
-            v: Template or tuple,
+            v: Union[Template, Tuple],
             times: int = 1,
-            blind: bool = False,
             interval: float = 0.05,
+            blind: bool = False,
             ocr_mode: int = 0,
             cls: Type[Ocr] = Ocr,
+            local_search=True,
+            v_name: str = None,
             **kwargs
     ) -> tuple:
         """
         Perform the touch action on the device screen
 
         Args:
-            v: Target to touch, either a ``ImageTemplate`` instance or absolute coordinates (x, y).
+            v: Target to touch, either a ``ImageTemplate`` instance or absolute coordinate (x, y).
             times: How many touches to be performed
-            blind: Whether to recognize Template, sometimes we only need to click without caring about the image.
             interval: Time interval between two touches.
+            blind: Whether to recognize Template, sometimes we only need to click without caring about the image.
             ocr_mode: Ocr match rules, one of `OCR_EQUAL`, `OCR_CONTAINS`, `OCR_SIMILAR`.
             cls: "Ocr" class or its subclass
+            local_search: True if you only want to search for template image at the corresponding positions on the screen,
+                otherwise it will search the entire screen.
+            v_name: When v is a coordinate but you want it has a name.
             **kwargs: Platform specific `kwargs`, please refer to corresponding docs.
 
         Returns:
@@ -166,7 +171,7 @@ class API:
             if blind:
                 center_pos = (v.area[2] + v.area[0]) / 2, (v.area[3] + v.area[1]) / 2
             else:
-                center_pos = loop_find(v, timeout=ST.FIND_TIMEOUT, cls=cls, ocr_mode=ocr_mode)
+                center_pos = loop_find(v, ocr_mode=ocr_mode, cls=cls, local_search=local_search)
 
             h = v.height * v.ratio()
             w = v.width * v.ratio()  # actual height and width of target in screen
@@ -178,6 +183,14 @@ class API:
             G.DEVICE.touch(pos, **kwargs)
             time.sleep(interval)
         delay_after_operation()
+
+        if isinstance(v, Template):
+            logger.info((f"Click{pos} {times} times" if times > 1 else f"Click{pos}") + f" @{v.name}")
+        elif v_name:
+            logger.info((f"Click{pos} {times} times" if times > 1 else f"Click{pos}") + f" @{v_name}")
+        else:
+            logger.info(f"Click{pos} {times} times" if times > 1 else f"Click{pos}")
+
         return pos
 
     @logwrap
@@ -186,10 +199,12 @@ class API:
             rec_template: Template,
             touch_template: Template = None,
             times: int = 1,
+            interval: float = 0.05,
             timeout: float = 1,
             blind: bool = False,
             ocr_mode: int = 0,
-            cls: Type[Ocr] = Ocr
+            cls: Type[Ocr] = Ocr,
+            local_search: bool = True
     ) -> bool:
         """
         Find the template image and click it or another image area.
@@ -198,16 +213,19 @@ class API:
             rec_template: "Template" instance to be found.
             touch_template: "ImageTemplate" instance to be clicked, defaults to None which means click rec_template.
             times: How many touches to be performed.
+            interval: Time interval between two touches.
             timeout: Time interval to wait for the match.
             blind: Whether to recognize Template, same as parameter of touch().
             ocr_mode: Ocr match rules, one of `OCR_EQUAL`, `OCR_CONTAINS`, `OCR_SIMILAR`.
             cls: "Ocr" class or its subclass
+            local_search: True if you only want to search for template image at the corresponding positions on the screen,
+                otherwise it will search the entire screen.
 
         Returns:
             bool: Whether the target image appear and click it.
         """
         try:
-            pos = self.wait(rec_template, timeout=timeout, ocr_mode=ocr_mode, cls=cls)
+            pos = self.wait(rec_template, timeout=timeout, ocr_mode=ocr_mode, cls=cls, local_search=local_search)
             h = rec_template.height * rec_template.ratio()
             w = rec_template.width * rec_template.ratio()  # actual height and width of target in screen
             pos = random_rectangle_point(pos, h, w)
@@ -215,16 +233,21 @@ class API:
             return False
 
         if touch_template:
-            self.touch(touch_template, times, blind, ocr_mode=ocr_mode, cls=cls)
-            logger.info((f"Click{pos} {times} times" if times > 1 else f"Click{pos}") + f" @{touch_template.name}")
+            self.touch(touch_template, times, interval, blind, ocr_mode, cls, local_search)
         else:
-            self.touch(pos, times)
-            logger.info((f"Click{pos} {times} times" if times > 1 else f"Click{pos}") + f" @{rec_template.name}")
+            self.touch(pos, times, interval, v_name=rec_template.name)
+
         return True
 
     @staticmethod
     @logwrap
-    def exists(v: Template, timeout: float = 0, ocr_mode: int = 0, cls: Type[Ocr] = Ocr) -> bool or tuple:
+    def exists(
+            v: Template,
+            timeout: float = 0,
+            ocr_mode: int = 0,
+            cls: Type[Ocr] = Ocr,
+            local_search=True
+    ) -> bool or tuple:
         """
         Check whether given target exists on device screen
 
@@ -233,6 +256,8 @@ class API:
             timeout: time limit, default is 0 which means loop_find will only search once
             ocr_mode: Ocr match rules, one of `OCR_EQUAL`, `OCR_CONTAINS`, `OCR_SIMILAR`.
             cls: "Ocr" class or its subclass
+            local_search: True if you only want to search for template image at the corresponding positions on the screen,
+                otherwise it will search the entire screen.
 
         Returns:
             False if target is not found, otherwise returns the coordinates of the target
@@ -252,7 +277,7 @@ class API:
                 touch(pos)
         """
         try:
-            pos = loop_find(v, timeout=timeout, ocr_mode=ocr_mode, cls=cls)
+            pos = loop_find(v, timeout=timeout, ocr_mode=ocr_mode, cls=cls, local_search=local_search)
         except TargetNotFoundError:
             return False
         else:
@@ -263,10 +288,11 @@ class API:
     def wait(
             v: Template,
             timeout: float = None,
-            interval: float = 0.5,
+            interval: float = 0.3,
             interval_func: Callable = None,
             ocr_mode: int = 0,
-            cls: Type[Ocr] = Ocr
+            cls: Type[Ocr] = Ocr,
+            local_search=True
     ) -> tuple:
         """
         Wait to match the Template on the device screen
@@ -278,6 +304,8 @@ class API:
             interval_func: called after each unsuccessful attempt to find the corresponding match
             ocr_mode: Ocr match rules, one of `OCR_EQUAL`, `OCR_CONTAINS`, `OCR_SIMILAR`.
             cls: "Ocr" class or its subclass
+            local_search: True if you only want to search for template image at the corresponding positions on the screen,
+                otherwise it will search the entire screen.
 
         Raises:
             TargetNotFoundError: raised if target is not found after the time limit expired
@@ -301,7 +329,8 @@ class API:
         """
         if timeout is None:
             timeout = ST.FIND_TIMEOUT
-        pos = loop_find(v, timeout=timeout, interval=interval, interval_func=interval_func, ocr_mode=ocr_mode, cls=cls)
+        pos = loop_find(v, timeout, interval=interval, interval_func=interval_func, ocr_mode=ocr_mode, cls=cls,
+                        local_search=local_search)
 
         return pos
 

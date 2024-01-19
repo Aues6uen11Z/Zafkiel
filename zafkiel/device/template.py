@@ -1,9 +1,12 @@
 import os
+import types
 from functools import cached_property
 from pathlib import Path
 
-from airtest.core.cv import Template
-from airtest.core.helper import G
+import cv2
+from airtest.core.cv import Template, MATCHING_METHODS
+from airtest.core.error import InvalidMatchingMethodError
+from airtest.core.helper import G, logwrap
 from airtest.utils.transform import TargetPos
 from numpy import ndarray
 
@@ -66,26 +69,28 @@ class ImageTemplate(Template):
     def width(self) -> int:
         return self.image.shape[1]
 
-    def _has_border(self) -> bool:
+    @cached_property
+    def border(self) -> tuple[int, int, int]:
         """
         If game running in a bordered process, coordinates need to be corrected.
+        todo: change judge method
 
         Returns:
-            Whether the game running in a bordered process.
+            Top, left and bottom boundary pixel values on the current screen.
         """
         actual_ratio = G.DEVICE.get_current_resolution()[0] / G.DEVICE.get_current_resolution()[1]
         template_ratio = self.resolution[0] / self.resolution[1]
-        return actual_ratio != template_ratio
+        if actual_ratio != template_ratio:
+            return Config.BORDER
+        else:
+            return 0, 0, 0
 
     def ratio(self, screen_height: float = None) -> float:
         """
         Calculate the ratio of the current screen to the template image.
         """
         if screen_height is None:
-            if self._has_border():
-                border = Config.BORDER[0] + Config.BORDER[2]
-            else:
-                border = 0
+            border = self.border[0] + self.border[2]
             screen_height = G.DEVICE.get_current_resolution()[1] - border
 
         return screen_height / self.resolution[1]
@@ -100,20 +105,90 @@ class ImageTemplate(Template):
         """
         screen_resolution = G.DEVICE.get_current_resolution()
 
-        if self._has_border():
-            border = Config.BORDER
-        else:
-            border = (0, 0, 0)
-
-        screen_width = screen_resolution[0] - border[1] * 2
-        screen_height = screen_resolution[1] - border[0] - border[2]
+        screen_width = screen_resolution[0] - self.border[1] * 2
+        screen_height = screen_resolution[1] - self.border[0] - self.border[2]
 
         ratio = self.ratio(screen_height)
-        x1 = screen_width / 2 + self.record_pos[0] * screen_width - self.width / 2 * ratio + border[1]
-        y1 = screen_height / 2 + self.record_pos[1] * screen_width - self.height / 2 * ratio + border[0]
-        x2 = screen_width / 2 + self.record_pos[0] * screen_width + self.width / 2 * ratio + border[1]
-        y2 = screen_height / 2 + self.record_pos[1] * screen_width + self.height / 2 * ratio + border[0]
+        x1 = screen_width / 2 + self.record_pos[0] * screen_width - self.width / 2 * ratio + self.border[1]
+        y1 = screen_height / 2 + self.record_pos[1] * screen_width - self.height / 2 * ratio + self.border[0]
+        x2 = screen_width / 2 + self.record_pos[0] * screen_width + self.width / 2 * ratio + self.border[1]
+        y2 = screen_height / 2 + self.record_pos[1] * screen_width + self.height / 2 * ratio + self.border[0]
         return x1, y1, x2, y2
+
+    def match_in(self, screen, local_search=True):
+        revise_coord = (0, 0)
+        if local_search:
+            # search area is a little larger than the template image area
+            x1, y1, x2, y2 = map(int, self.area)
+            width_increase = (x2 - x1) * 0.2
+            height_increase = (y2 - y1) * 0.2
+            x1 = int(max(x1 - width_increase, 0))
+            y1 = int(max(y1 - height_increase, 0))
+            x2 = int(min(x2 + width_increase, screen.shape[1]))
+            y2 = int(min(y2 + height_increase, screen.shape[0]))
+
+            revise_coord = x1, y1
+            screen = screen[y1:y2, x1:x2]
+
+        screen_resolution = G.DEVICE.get_current_resolution()
+        screen_width = screen_resolution[0] - self.border[1] * 2
+        screen_height = screen_resolution[1] - self.border[0] - self.border[2]
+
+        match_result = self._cv_match(screen, (screen_width, screen_height))
+        G.LOGGING.debug("match result: %s", match_result)
+        if not match_result:
+            return None
+        focus_pos = TargetPos().getXY(match_result, self.target_pos)
+
+        if local_search:
+            focus_pos = focus_pos[0] + revise_coord[0], focus_pos[1] + revise_coord[1]
+
+        return focus_pos
+
+    @logwrap
+    def _cv_match(self, screen, screen_resolution):
+        ori_image = self.image
+        image = self._resize_image(ori_image, screen_resolution, Config.ST.RESIZE_METHOD)
+        ret = None
+        for method in Config.ST.CVSTRATEGY:
+            # get function definition and execute:
+            func = MATCHING_METHODS.get(method, None)
+            if func is None:
+                raise InvalidMatchingMethodError(
+                    "Undefined method in CVSTRATEGY: '%s', try 'kaze'/'brisk'/'akaze'/'orb'/'surf'/'sift'/'brief' instead." % method)
+            else:
+                if method in ["mstpl", "gmstpl"]:
+                    ret = self._try_match(func, ori_image, screen, threshold=self.threshold, rgb=self.rgb,
+                                          record_pos=self.record_pos,
+                                          resolution=self.resolution, scale_max=self.scale_max,
+                                          scale_step=self.scale_step)
+                else:
+                    ret = self._try_match(func, image, screen, threshold=self.threshold, rgb=self.rgb)
+            if ret:
+                break
+        return ret
+
+    def _resize_image(self, image, screen_resolution, resize_method):
+        """
+        Scale the template image to the current screen resolution.
+        """
+        if not self.resolution:
+            return image
+
+        if tuple(self.resolution) == tuple(screen_resolution) or resize_method is None:
+            return image
+        if isinstance(resize_method, types.MethodType):
+            resize_method = resize_method.__func__
+
+        # default to using cocos_min_strategy:
+        h, w = image.shape[:2]
+        w_re, h_re = resize_method(w, h, self.resolution, screen_resolution)
+        w_re, h_re = max(1, w_re), max(1, h_re)
+        G.LOGGING.debug("resize: (%s, %s)->(%s, %s), resolution: %s=>%s" % (
+                        w, h, w_re, h_re, self.resolution, screen_resolution))
+
+        image = cv2.resize(image, (w_re, h_re))
+        return image
 
 
 Template = ImageTemplate

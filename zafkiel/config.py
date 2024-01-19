@@ -3,7 +3,7 @@ from airtest.core.settings import Settings
 
 class Config:
     ST = Settings
-    ST.CVSTRATEGY = ["mstpl", "sift"]
+    ST.CVSTRATEGY = ["tpl", "akaze"]
     ST.THRESHOLD = 0.8
 
     GAME_PATH = None

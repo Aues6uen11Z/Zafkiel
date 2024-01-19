@@ -11,7 +11,16 @@ from zafkiel.utils import is_color_similar, crop
 
 
 @logwrap
-def loop_find(v, timeout=ST.FIND_TIMEOUT, threshold=None, interval=0.5, interval_func=None, ocr_mode=0, cls=Ocr):
+def loop_find(
+        v,
+        timeout=ST.FIND_TIMEOUT,
+        threshold=None,
+        interval=0.3,
+        interval_func=None,
+        ocr_mode=0,
+        cls=Ocr,
+        local_search=True
+):
     """
     Search for image template in the screen until timeout
     Add OCR and color similarity search to airtest.cv.loop_find()
@@ -24,6 +33,8 @@ def loop_find(v, timeout=ST.FIND_TIMEOUT, threshold=None, interval=0.5, interval
         interval_func: function that is executed after unsuccessful attempt to find the image template
         ocr_mode: Ocr match rules, one of `OCR_EQUAL`, `OCR_CONTAINS`, `OCR_SIMILAR`.
         cls: "Ocr" class or its subclass
+        local_search: True if you only want to search for template image at the corresponding positions on the screen,
+            otherwise it will search the entire screen.
 
     Raises:
         TargetNotFoundError: when image template is not found in screenshot
@@ -50,7 +61,7 @@ def loop_find(v, timeout=ST.FIND_TIMEOUT, threshold=None, interval=0.5, interval
                         try_log_screen(screen)
                         return match_pos
                 else:
-                    match_pos = v.match_in(screen)
+                    match_pos = v.match_in(screen, local_search)
                     if match_pos:
                         cost_time = time.time() - start_time
                         logger.debug(f"ImgRec <{v.name}> cost {cost_time:.2f}s: {match_pos}")

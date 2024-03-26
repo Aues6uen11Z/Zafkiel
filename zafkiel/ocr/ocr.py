@@ -37,9 +37,9 @@ class OcrResultButton:
             self.name = str(matched_keyword)
         else:
             self.matched_keyword = None
-            self.name = boxed_result.ocr_text
+            self.name = boxed_result.text
 
-        self.text = boxed_result.ocr_text
+        self.text = boxed_result.text
         self.score = boxed_result.score
 
     @property
@@ -153,10 +153,10 @@ class Ocr:
         results = [result for result in results if self.filter_detected(result)]
         results = merge_buttons(results, thres_x=self.merge_thres_x, thres_y=self.merge_thres_y)
         for result in results:
-            result.ocr_text = self.after_process(result.ocr_text)
+            result.text = self.after_process(result.text)
 
         cost_time = time.time() - start_time
-        logger.debug(f"OCR <{self.name}> cost {cost_time:.2f}s: {', '.join([result.ocr_text for result in results])}")
+        logger.debug(f"OCR <{self.name}> cost {cost_time:.2f}s: {', '.join([result.text for result in results])}")
         return results
 
     @staticmethod
@@ -239,7 +239,7 @@ class Ocr:
             keyword_classes = [keyword_classes]
 
         matched_keyword = self._match_result(
-            boxed_result.ocr_text,
+            boxed_result.text,
             keyword_classes=keyword_classes,
             lang=lang,
             ignore_punctuation=ignore_punctuation,
@@ -290,12 +290,12 @@ class Ocr:
         final_results = []
         for boxed_result in boxed_results:
             for keyword in keyword_instance.keywords_to_find():
-                if mode == OCR_EQUAL and boxed_result.ocr_text != keyword:
+                if mode == OCR_EQUAL and boxed_result.text != keyword:
                     continue
-                elif mode == OCR_CONTAINS and keyword not in boxed_result.ocr_text:
+                elif mode == OCR_CONTAINS and keyword not in boxed_result.text:
                     continue
                 elif mode == OCR_SIMILAR:
-                    similarity = SequenceMatcher(None, boxed_result.ocr_text, keyword).ratio()
+                    similarity = SequenceMatcher(None, boxed_result.text, keyword).ratio()
                     if similarity < threshold:
                         continue
                 button = OcrResultButton(boxed_result, keyword_instance)

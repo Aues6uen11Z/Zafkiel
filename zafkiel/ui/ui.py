@@ -154,9 +154,9 @@ class UI(API):
                 raise ScriptError(f'Page {destination} has no switch')
             destination.switch.get_data(state)
 
-            logger.debug(f"------ UI GOTO {str(destination).upper()}:{state.name.upper()} ------")
+            logger.debug(f">>> UI GOTO {str(destination).upper()}:{state.name.upper()}")
         else:
-            logger.debug(f"------ UI GOTO {str(destination).upper()} ------")
+            logger.debug(f">>> UI GOTO {str(destination).upper()}")
 
         # Create connection
         Page.init_connection(destination)

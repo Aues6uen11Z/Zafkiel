@@ -11,10 +11,10 @@ readme = "README.md"
 license = {text = "GPL-3.0 license"}
 requires-python = ">=3.6"
 dependencies = [
-    "airtest >= 1.3.1",
-    "pyautogui >= 0.9.54",
-    "loguru >= 0.7.2",
-    "pponnxcr >= 2.0"
+    "airtest == 1.3.3",
+    "pyautogui == 0.9.54",
+    "loguru == 0.7.2",
+    "pponnxcr == 2.1"
 ]
 
 [project.urls]

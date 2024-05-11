@@ -8,3 +8,6 @@ class PageUnknownError(Exception):
 
 class ScriptError(Exception):
     pass
+
+class LoopError(Exception):
+    pass

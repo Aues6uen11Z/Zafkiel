@@ -68,7 +68,7 @@ class Keyword:
 
     def keywords_to_find(self, lang: str = None, ignore_punctuation: bool = True):
         if lang is None:
-            lang = Config.SERVER_LANG
+            lang = 'cn'
 
         # TODO: fix this refer to SRC
         if lang == 'cn':

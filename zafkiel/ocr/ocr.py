@@ -74,7 +74,7 @@ class Ocr:
             name: If None, use button.name
         """
         if lang is None:
-            lang = Config.SERVER_LANG
+            lang = 'cn'
         if name is None:
             name = button.name
 

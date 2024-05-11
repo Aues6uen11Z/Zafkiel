@@ -89,6 +89,6 @@ def compress_image(pil_img, path, quality, max_size=None):
 def simple_report(filepath, log_path=True, logfile=None, output=HTML_FILE):
     path, name = script_dir_name(filepath)
     if log_path is True:
-        log_path = os.path.join(path, getattr(Config, "LOG_DIR", DEFAULT_LOG_DIR))
+        log_path = os.path.join(path, getattr(Config.ST, "LOG_DIR", DEFAULT_LOG_DIR))
     rpt = HtmlReport(path, log_path, logfile=logfile or getattr(Config, "LOG_FILE", DEFAULT_LOG_FILE), script_name=name)
     rpt.report(HTML_TPL, output_file=output)

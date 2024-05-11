@@ -75,6 +75,6 @@ def loop_find(
         if (time.time() - start_time) > timeout:
             logger.debug(f"<{v.name}> matching failed in {timeout}s")
             try_log_screen(screen)
-            raise TargetNotFoundError(f'Picture {v} not found on screen')
+            raise TargetNotFoundError(f'Picture {v.filepath} not found on screen')
         else:
             time.sleep(interval)

@@ -47,7 +47,7 @@ class API:
             basedir: str = None,
             devices: list = None,
             firing_time: int = 30,
-            logdir: bool = None,
+            logdir: Union[bool, None, str] = None,
             project_root: str = None,
             compress: int = None
     ):

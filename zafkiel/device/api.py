@@ -230,6 +230,7 @@ class API:
             w = rec_template.width * rec_template.ratio()  # actual height and width of target in screen
             pos = random_rectangle_point(pos, h, w)
         except TargetNotFoundError:
+            logger.info(f"<{rec_template.name}> matching failed in {timeout}s")
             return False
 
         if touch_template:

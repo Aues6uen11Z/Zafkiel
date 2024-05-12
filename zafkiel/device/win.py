@@ -1,6 +1,9 @@
+from typing import Tuple
+
 from airtest.core.win import Windows
 from pyautogui import dragTo, moveTo
 from pytweening import easeOutQuad
+import win32gui
 
 
 class WindowsPlatform(Windows):
@@ -34,3 +37,12 @@ class WindowsPlatform(Windows):
 
         moveTo(from_x, from_y)
         dragTo(to_x, to_y, duration=duration, tween=easeOutQuad, button=button)
+
+    def real_resolution(self) -> Tuple[int, int]:
+        """
+        The real window resolution not affected by the border
+
+        Returns:
+            width, height
+        """
+        return win32gui.GetClientRect(self.app.window().handle)[-2:]

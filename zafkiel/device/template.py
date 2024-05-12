@@ -72,18 +72,18 @@ class ImageTemplate(Template):
     @cached_property
     def border(self) -> tuple[int, int, int]:
         """
-        If game running in a bordered process, coordinates need to be corrected.
-        todo: change judge method
+        If running in a bordered window, coordinates need to be corrected.
 
         Returns:
             Top, left and bottom boundary pixel values on the current screen.
         """
-        actual_ratio = G.DEVICE.get_current_resolution()[0] / G.DEVICE.get_current_resolution()[1]
-        template_ratio = self.resolution[0] / self.resolution[1]
-        if actual_ratio != template_ratio:
-            return Config.BORDER
-        else:
-            return 0, 0, 0
+        real_resolution = G.DEVICE.real_resolution()
+        screenshot_resolution = G.DEVICE.get_current_resolution()
+
+        border_other = (screenshot_resolution[0] - real_resolution[0]) / 2
+        border_top = screenshot_resolution[1] - real_resolution[1] - border_other
+
+        return border_top, border_other, border_other
 
     def ratio(self, screen_height: float = None) -> float:
         """

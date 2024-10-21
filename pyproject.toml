@@ -26,7 +26,7 @@ dev = ["bumpver", "pip-tools"]
 [tool.bumpver]
 current_version = "0.1.2"
 version_pattern = "MAJOR.MINOR.PATCH"
-commit_message  = "Bump version {old_version} -> {new_version}"
+commit_message  = "chore: bump version {old_version} -> {new_version}"
 commit          = true
 tag             = true
 push            = false

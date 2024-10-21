@@ -1,6 +1,5 @@
-from zafkiel.device.template import ImageTemplate as Template
+from zafkiel import exists, Template, app_is_running, touch, screenshot
 from zafkiel.logger import logger
-from zafkiel.device.api import API
 from zafkiel.ocr.ocr import Ocr
 from zafkiel.ui.page import Page
 from zafkiel.decorator import run_once
@@ -9,7 +8,7 @@ from zafkiel.timer import Timer
 from zafkiel.ui.switch import Switch
 
 
-class UI(API):
+class UI:
     """
     Processing interface related functions.
     Main code comes from https://github.com/LmeSzinc/StarRailCopilot/blob/master/tasks/base/ui.py
@@ -29,7 +28,7 @@ class UI(API):
             return False
 
         for data in switch.state_list:
-            if self.exists(data['check_button']):
+            if exists(data['check_button']):
                 return True
         return False
 
@@ -46,11 +45,12 @@ class UI(API):
             return 'unknown'
 
         for data in switch.state_list:
-            if self.exists(data['check_button']):
+            if exists(data['check_button']):
                 return data['state']
         return 'unknown'
 
-    def ui_page_appear(self, page: Page, timeout: float = 0) -> bool or tuple:
+    @staticmethod
+    def ui_page_appear(page: Page, timeout: float = 0) -> bool or tuple:
         """
         Args:
             page:
@@ -59,7 +59,7 @@ class UI(API):
         Returns:
             If found, return tuple of (x, y), else return False.
         """
-        return self.exists(page.check_button, timeout)
+        return exists(page.check_button, timeout)
 
     def ui_get_current_page(self):
         """
@@ -73,7 +73,7 @@ class UI(API):
 
         @run_once
         def app_check():
-            if not self.app_is_running():
+            if not app_is_running():
                 raise NotRunningError("Game not running")
 
         timeout = Timer(10, count=20).start()
@@ -135,7 +135,7 @@ class UI(API):
             if click_timer.reached():
                 click_state = state if switch.is_choice else current
                 button = switch.get_data(click_state)['click_button']
-                self.touch(button)
+                touch(button)
                 click_timer.reset()
                 changed = True
 
@@ -176,10 +176,10 @@ class UI(API):
             for page in Page.iter_pages(start_page=self.ui_current['page']):
                 if page.parent is None or page.check_button is None:
                     continue
-                if self.exists(page.check_button):
+                if exists(page.check_button):
                     self.ui_current['page'] = page
                     button = page.links[page.parent]
-                    self.touch(button)
+                    touch(button)
                     logger.info(f'Page switch: {page} -> {page.parent}')
                     clicked = True
                     break
@@ -242,9 +242,9 @@ class UI(API):
         retry = Timer(1, count=2)
         while True:
             if isinstance(letter, Ocr):
-                current = letter.ocr_single_line(self.screenshot())
+                current = letter.ocr_single_line(screenshot())
             else:
-                current = letter(self.screenshot())
+                current = letter(screenshot())
 
             logger.info(f"{self.ui_current['page']}: Index {current}")
             diff = index - current
@@ -257,9 +257,9 @@ class UI(API):
             if retry.reached():
                 button = next_button if diff > 0 else prev_button
                 if fast:
-                    self.touch(button, times=abs(diff), interval=interval)
+                    touch(button, times=abs(diff), interval=interval)
                 else:
-                    self.touch(button)
+                    touch(button)
                 retry.reset()
 
     def get_popup_list(self, popups: list):

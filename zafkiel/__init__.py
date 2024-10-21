@@ -1,7 +1,7 @@
 from airtest.core.helper import G
 
 from zafkiel.config import Config
-from zafkiel.device.api import API
+from zafkiel.device.api import *
 from zafkiel.device.template import Template
 from zafkiel.device.win import WindowsPlatform
 from zafkiel.timer import Timer

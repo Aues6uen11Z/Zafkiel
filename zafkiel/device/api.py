@@ -1,4 +1,4 @@
-from typing import Tuple, Type, Callable, Union
+from typing import Optional, Tuple, Type, Callable, Union, List
 
 from airtest.core.api import *
 from airtest.core.cv import try_log_screen
@@ -19,9 +19,9 @@ from zafkiel.utils import random_rectangle_point
 
 def auto_setup(
         basedir: str = None,
-        devices: list = None,
+        devices: Optional[List[str]] = None,
         firing_time: int = 30,
-        logdir: Union[bool, None, str] = None,
+        logdir: Optional[Union[bool, str]] = None,
         project_root: str = None,
         compress: int = None
 ):
@@ -96,16 +96,16 @@ def stop_app(package=None):
 
 @logwrap
 def touch(
-        v: Union[Template, Tuple],
+        v: Union[Template, Tuple[int, int]],
         times: int = 1,
         interval: float = 0.05,
         blind: bool = False,
         ocr_mode: int = 0,
         cls: Type[Ocr] = Ocr,
-        local_search=True,
+        local_search: bool = True,
         v_name: str = None,
         **kwargs
-) -> tuple:
+) -> Tuple[int, int]:
     """
     Perform the touch action on the device screen
 
@@ -167,7 +167,7 @@ def touch(
 @logwrap
 def find_click(
         rec_template: Template,
-        touch_template: Template = None,
+        touch_template: Optional[Template] = None,
         times: int = 1,
         interval: float = 0.05,
         timeout: float = 1,
@@ -217,8 +217,8 @@ def exists(
         timeout: float = 0,
         ocr_mode: int = 0,
         cls: Type[Ocr] = Ocr,
-        local_search=True
-) -> bool or tuple:
+        local_search: bool = True
+) -> Union[bool, Tuple[int, int]]:
     """
     Check whether given target exists on device screen
 
@@ -258,13 +258,13 @@ def exists(
 @logwrap
 def wait(
         v: Template,
-        timeout: float = None,
+        timeout: Optional[float] = None,
         interval: float = 0.3,
-        interval_func: Callable = None,
+        interval_func: Optional[Callable] = None,
         ocr_mode: int = 0,
         cls: Type[Ocr] = Ocr,
-        local_search=True
-) -> tuple:
+        local_search: bool = True
+) -> Tuple[int, int]:
     """
     Wait to match the Template on the device screen
 
@@ -307,13 +307,13 @@ def wait(
 
 
 def swipe(
-        v1: Template or tuple,
-        v2: Template or tuple = None,
-        vector: tuple = None,
+        v1: Union[Template, Tuple[int, int]],
+        v2: Optional[Union[Template, Tuple[int, int]]] = None,
+        vector: Optional[Tuple[float, float]] = None,
         blind1: bool = False,
         blind2: bool = False,
         **kwargs
-) -> tuple:
+) -> Tuple[Tuple[int, int], Tuple[int, int]]:
     """
     Perform the swipe action on the device screen.
 

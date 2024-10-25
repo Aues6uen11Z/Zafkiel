@@ -8,16 +8,18 @@
 
 Zafkiel is a secondary encapsulation of Airtest, integrating the page logic, OCR capabilities and other advanced features of StarRailCopilot, aiming to provide more powerful and flexible automated testing capabilities.
 
+## Docs
+
+Please refer to the [Wiki](https://github.com/Aues6uen11Z/Zafkiel/wiki) page for information on how to use
+
 ## Examples
 
 - [HonkaiHelper](https://github.com/Aues6uen11Z/HonkaiHelper), Honkai Impact 3rd automation script.
 
-## License
+## Credits
 
-This project is licensed under [GPL-3.0](LICENSE) . 
+This project uses the following open source libraries:
 
-In addition, this project uses the following open source libraries:
+- [Airtest](https://github.com/AirtestProject/Airtest)
 
-\- [Airtest](https://github.com/AirtestProject/Airtest), the license can be viewed [here](https://github.com/AirtestProject/Airtest/blob/master/LICENSE)
-
-\- [StarRailCopilot](https://github.com/StarRailCopilot/StarRailCopilot), the license can be viewed [here](https://github.com/LmeSzinc/StarRailCopilot/blob/master/LICENSE)
+- [StarRailCopilot](https://github.com/StarRailCopilot/StarRailCopilot)

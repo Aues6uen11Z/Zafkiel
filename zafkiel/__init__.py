@@ -2,7 +2,7 @@ from airtest.core.helper import G
 
 from zafkiel.config import Config
 from zafkiel.device.api import *
-from zafkiel.device.template import Template
+from zafkiel.device.template import ImageTemplate as Template
 from zafkiel.device.win import WindowsPlatform
 from zafkiel.timer import Timer
 from zafkiel.report import simple_report

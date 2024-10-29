@@ -2,6 +2,7 @@ import os
 import types
 from functools import cached_property
 from pathlib import Path
+from typing import Optional, Tuple
 
 import cv2
 from airtest.core.cv import Template, MATCHING_METHODS
@@ -18,15 +19,15 @@ class ImageTemplate(Template):
     def __init__(
             self,
             filename: str,
-            record_pos: tuple = None,
-            keyword: Keyword = None,
-            threshold: float = None,
-            target_pos: int = TargetPos.MID,
-            resolution: tuple = (1280, 720),
+            record_pos: Optional[Tuple[float, float]] = None,
+            keyword: Optional[Keyword] = None,
+            resolution: Tuple[int, int] = (1280, 720),
             rgb: bool = False,
+            template_path: str = 'templates',
+            threshold: Optional[float] = None,
+            target_pos: int = TargetPos.MID,
             scale_max: int = 800,
-            scale_step: float = 0.005,
-            template_path: str = 'templates'
+            scale_step: float = 0.005
     ):
 
         super().__init__(filename, threshold, target_pos, record_pos, resolution, rgb, scale_max, scale_step)
@@ -189,6 +190,3 @@ class ImageTemplate(Template):
 
         image = cv2.resize(image, (w_re, h_re))
         return image
-
-
-Template = ImageTemplate

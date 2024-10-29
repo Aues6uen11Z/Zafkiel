@@ -250,6 +250,7 @@ def exists(
     try:
         pos = loop_find(v, timeout=timeout, ocr_mode=ocr_mode, cls=cls, local_search=local_search)
     except TargetNotFoundError:
+        logger.info(f"<{v.name}> matching failed in {timeout}s")
         return False
     else:
         return pos

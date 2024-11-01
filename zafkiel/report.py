@@ -7,8 +7,23 @@ from airtest.aircv import imread, FileNotExistError, get_resolution
 
 from airtest.report.report import LogToHtml, LOGGING, HTML_FILE, DEFAULT_LOG_DIR, DEFAULT_LOG_FILE, HTML_TPL
 from airtest.utils.compat import script_dir_name
+from airtest.utils.logwraper import AirtestLogger
 
 from zafkiel.config import Config
+
+
+class ZafkielLogger(AirtestLogger):
+    # Changed file mode from "w" to "a" to append to the log file instead of overwriting it.
+    def set_logfile(self, logfile):
+        if logfile:
+            self.logfile = os.path.realpath(logfile)
+            self.logfd = open(self.logfile, "a")
+        else:
+            # use G.LOGGER.set_logfile(None) to reset logfile
+            self.logfile = None
+            if self.logfd:
+                self.logfd.close()
+                self.logfd = None
 
 
 class HtmlReport(LogToHtml):

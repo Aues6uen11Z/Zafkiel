@@ -139,7 +139,7 @@ class UI:
                 click_timer.reset()
                 changed = True
 
-        return changed
+            self.ui_additional()
 
     def ui_goto(self, destination: Page, state: Template = None):
         """

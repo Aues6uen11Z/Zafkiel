@@ -1,3 +1,4 @@
+from typing import Union
 from zafkiel import exists, Template, app_is_running, touch, screenshot
 from zafkiel.logger import logger
 from zafkiel.ocr.ocr import Ocr
@@ -50,7 +51,7 @@ class UI:
         return 'unknown'
 
     @staticmethod
-    def ui_page_appear(page: Page, timeout: float = 0) -> bool or tuple:
+    def ui_page_appear(page: Page, timeout: float = 0) -> Union[bool, tuple]:
         """
         Args:
             page:
@@ -222,7 +223,7 @@ class UI:
     def ui_ensure_index(
             self,
             index: int,
-            letter: Ocr or callable,
+            letter: Union[Ocr, callable],
             next_button: Template,
             prev_button: Template,
             fast: bool = True,

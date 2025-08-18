@@ -23,6 +23,7 @@ class ImageTemplate(Template):
             keyword: Optional[Keyword] = None,
             resolution: Tuple[int, int] = (1280, 720),
             rgb: bool = False,
+            local_search: bool = True,
             template_path: str = 'templates',
             threshold: Optional[float] = None,
             target_pos: int = TargetPos.MID,
@@ -33,6 +34,7 @@ class ImageTemplate(Template):
         super().__init__(filename, threshold, target_pos, record_pos, resolution, rgb, scale_max, scale_step)
 
         self.template_path = template_path  # under root path
+        self.local_search = local_search
         self.keyword = keyword
         if self.keyword is not None and self.keyword.name == '':
             """

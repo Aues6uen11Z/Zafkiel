@@ -1,4 +1,5 @@
 import time
+from typing import Callable, Tuple, Type
 
 from airtest.core.cv import try_log_screen
 from airtest.core.error import TargetNotFoundError
@@ -13,14 +14,14 @@ from zafkiel.utils import is_color_similar, crop
 @logwrap
 def loop_find(
         v,
-        timeout=ST.FIND_TIMEOUT,
-        threshold=None,
-        interval=0.3,
-        interval_func=None,
-        ocr_mode=0,
-        cls=Ocr,
-        local_search=True
-):
+        timeout: float = ST.FIND_TIMEOUT,
+        threshold: float = None,
+        interval: float= 0.3,
+        interval_func: Callable[[], None] = None,
+        ocr_mode: int = 0,
+        cls: Type[Ocr] = Ocr,
+        local_search: bool = True
+) -> Tuple[int, int]:
     """
     Search for image template in the screen until timeout
     Add OCR and color similarity search to airtest.cv.loop_find()
@@ -54,9 +55,10 @@ def loop_find(
                 v.threshold = threshold
 
             if not v.rgb or is_color_similar(v.image, crop(screen, v.area)):
+                local_search = local_search and v.local_search
                 if v.keyword is not None:
                     ocr = cls(v)
-                    if ocr.ocr_match_keyword(screen, ocr.button.keyword, mode=ocr_mode):
+                    if ocr.ocr_match_keyword(screen, ocr.button.keyword, direct_ocr=not local_search, mode=ocr_mode):
                         match_pos = int((v.area[0] + v.area[2]) / 2), int((v.area[1] + v.area[3]) / 2)
                         try_log_screen(screen)
                         return match_pos

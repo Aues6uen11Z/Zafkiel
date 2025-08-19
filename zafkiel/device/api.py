@@ -100,9 +100,7 @@ def touch(
         times: int = 1,
         interval: float = 0.05,
         blind: bool = False,
-        ocr_mode: int = 0,
         cls: Type[Ocr] = Ocr,
-        local_search: bool = True,
         v_name: str = None,
         **kwargs
 ) -> Tuple[int, int]:
@@ -114,10 +112,7 @@ def touch(
         times: How many touches to be performed
         interval: Time interval between two touches.
         blind: Whether to recognize Template, sometimes we only need to click without caring about the image.
-        ocr_mode: Ocr match rules, one of `OCR_EQUAL`, `OCR_CONTAINS`, `OCR_SIMILAR`.
         cls: "Ocr" class or its subclass
-        local_search: True if you only want to search for template image at the corresponding positions on the screen,
-            otherwise it will search the entire screen.
         v_name: When v is a coordinate, but you want it has a name.
         **kwargs: Platform specific `kwargs`, please refer to corresponding docs.
 
@@ -141,7 +136,7 @@ def touch(
         if blind:
             center_pos = (v.area[2] + v.area[0]) / 2, (v.area[3] + v.area[1]) / 2
         else:
-            center_pos = loop_find(v, ocr_mode=ocr_mode, cls=cls, local_search=local_search)
+            center_pos = loop_find(v, cls=cls)
 
         h = v.height * v.ratio()
         w = v.width * v.ratio()  # actual height and width of target in screen
@@ -172,9 +167,7 @@ def find_click(
         interval: float = 0.05,
         timeout: float = 1,
         blind: bool = False,
-        ocr_mode: int = 0,
         cls: Type[Ocr] = Ocr,
-        local_search: bool = True
 ) -> bool:
     """
     Find the template image and click it or another image area.
@@ -186,16 +179,13 @@ def find_click(
         interval: Time interval between two touches.
         timeout: Time interval to wait for the match.
         blind: Whether to recognize Template, same as parameter of touch().
-        ocr_mode: Ocr match rules, one of `OCR_EQUAL`, `OCR_CONTAINS`, `OCR_SIMILAR`.
         cls: "Ocr" class or its subclass
-        local_search: True if you only want to search for template image at the corresponding positions on the screen,
-            otherwise it will search the entire screen.
 
     Returns:
         bool: Whether the target image appear and click it.
     """
     try:
-        pos = wait(rec_template, timeout=timeout, ocr_mode=ocr_mode, cls=cls, local_search=local_search)
+        pos = wait(rec_template, timeout=timeout)
         h = rec_template.height * rec_template.ratio()
         w = rec_template.width * rec_template.ratio()  # actual height and width of target in screen
         pos = random_rectangle_point(pos, h, w)
@@ -204,7 +194,7 @@ def find_click(
         return False
 
     if touch_template:
-        touch(touch_template, times, interval, blind, ocr_mode, cls, local_search)
+        touch(touch_template, times, interval, blind, cls)
     else:
         touch(pos, times, interval, v_name=rec_template.name)
 
@@ -215,9 +205,7 @@ def find_click(
 def exists(
         v: Template,
         timeout: float = 0,
-        ocr_mode: int = 0,
         cls: Type[Ocr] = Ocr,
-        local_search: bool = True
 ) -> Union[bool, Tuple[int, int]]:
     """
     Check whether given target exists on device screen
@@ -225,10 +213,7 @@ def exists(
     Args:
         v: target to be checked
         timeout: time limit, default is 0 which means loop_find will only search once
-        ocr_mode: Ocr match rules, one of `OCR_EQUAL`, `OCR_CONTAINS`, `OCR_SIMILAR`.
         cls: "Ocr" class or its subclass
-        local_search: True if you only want to search for template image at the corresponding positions on the screen,
-            otherwise it will search the entire screen.
 
     Returns:
         False if target is not found, otherwise returns the coordinates of the target
@@ -248,7 +233,7 @@ def exists(
             touch(pos)
     """
     try:
-        pos = loop_find(v, timeout=timeout, ocr_mode=ocr_mode, cls=cls, local_search=local_search)
+        pos = loop_find(v, timeout=timeout, cls=cls)
     except TargetNotFoundError:
         logger.info(f"<{v.name}> matching failed in {timeout}s")
         return False
@@ -262,9 +247,7 @@ def wait(
         timeout: Optional[float] = None,
         interval: float = 0.3,
         interval_func: Optional[Callable] = None,
-        ocr_mode: int = 0,
         cls: Type[Ocr] = Ocr,
-        local_search: bool = True
 ) -> Tuple[int, int]:
     """
     Wait to match the Template on the device screen
@@ -274,10 +257,7 @@ def wait(
         timeout: time interval to wait for the match, default is None which is ``ST.FIND_TIMEOUT``
         interval: time interval in seconds to attempt to find a match
         interval_func: called after each unsuccessful attempt to find the corresponding match
-        ocr_mode: Ocr match rules, one of `OCR_EQUAL`, `OCR_CONTAINS`, `OCR_SIMILAR`.
         cls: "Ocr" class or its subclass
-        local_search: True if you only want to search for template image at the corresponding positions on the screen,
-            otherwise it will search the entire screen.
 
     Raises:
         TargetNotFoundError: raised if target is not found after the time limit expired
@@ -301,8 +281,7 @@ def wait(
     """
     if timeout is None:
         timeout = ST.FIND_TIMEOUT
-    pos = loop_find(v, timeout, interval=interval, interval_func=interval_func, ocr_mode=ocr_mode, cls=cls,
-                    local_search=local_search)
+    pos = loop_find(v, timeout, interval=interval, interval_func=interval_func, cls=cls)
 
     return pos
 

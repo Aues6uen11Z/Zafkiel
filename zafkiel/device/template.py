@@ -24,17 +24,25 @@ class ImageTemplate(Template):
             resolution: Tuple[int, int] = (1280, 720),
             rgb: bool = False,
             local_search: bool = True,
+            ocr_mode: int = 0,
             template_path: str = 'templates',
             threshold: Optional[float] = None,
             target_pos: int = TargetPos.MID,
             scale_max: int = 800,
             scale_step: float = 0.005
     ):
+        """
+        Args:
+            local_search: True if you only want to search for template image at the corresponding positions on the screen,
+                otherwise it will search the entire screen.
+            ocr_mode: Ocr match rules, one of 0/1/2, which means `OCR_EQUAL`, `OCR_CONTAINS`, `OCR_SIMILAR`.
+        """
 
         super().__init__(filename, threshold, target_pos, record_pos, resolution, rgb, scale_max, scale_step)
 
         self.template_path = template_path  # under root path
         self.local_search = local_search
+        self.ocr_mode = ocr_mode
         self.keyword = keyword
         if self.keyword is not None and self.keyword.name == '':
             """

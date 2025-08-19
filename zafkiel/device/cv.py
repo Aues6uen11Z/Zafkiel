@@ -18,9 +18,7 @@ def loop_find(
         threshold: float = None,
         interval: float= 0.3,
         interval_func: Callable[[], None] = None,
-        ocr_mode: int = 0,
         cls: Type[Ocr] = Ocr,
-        local_search: bool = True
 ) -> Tuple[int, int]:
     """
     Search for image template in the screen until timeout
@@ -32,10 +30,7 @@ def loop_find(
         threshold: default is None
         interval: sleep interval before next attempt to find the image template
         interval_func: function that is executed after unsuccessful attempt to find the image template
-        ocr_mode: Ocr match rules, one of `OCR_EQUAL`, `OCR_CONTAINS`, `OCR_SIMILAR`.
         cls: "Ocr" class or its subclass
-        local_search: True if you only want to search for template image at the corresponding positions on the screen,
-            otherwise it will search the entire screen.
 
     Raises:
         TargetNotFoundError: when image template is not found in screenshot
@@ -55,12 +50,11 @@ def loop_find(
                 v.threshold = threshold
 
             if not v.rgb or is_color_similar(v.image, crop(screen, v.area)):
-                local_search = local_search and v.local_search
                 if v.keyword is not None:
                     ocr = cls(v)
-                    ocr_result = ocr.ocr_match_keyword(screen, ocr.button.keyword, direct_ocr=not local_search, mode=ocr_mode)
+                    ocr_result = ocr.ocr_match_keyword(screen, ocr.button.keyword, direct_ocr=not v.local_search, mode=v.ocr_mode)
                     if ocr_result:
-                        if local_search:
+                        if v.local_search:
                             match_pos = int((v.area[0] + v.area[2]) / 2), int((v.area[1] + v.area[3]) / 2)
                         else:
                             x1, y1, x2, y2 = ocr_result[0].area[0], ocr_result[0].area[1], ocr_result[0].area[2], ocr_result[0].area[3]
@@ -68,7 +62,7 @@ def loop_find(
                         try_log_screen(screen)
                         return match_pos
                 else:
-                    match_pos = v.match_in(screen, local_search)
+                    match_pos = v.match_in(screen, v.local_search)
                     if match_pos:
                         cost_time = time.time() - start_time
                         logger.debug(f"ImgRec <{v.name}> cost {cost_time:.2f}s: {match_pos}")

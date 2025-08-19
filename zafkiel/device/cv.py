@@ -58,8 +58,13 @@ def loop_find(
                 local_search = local_search and v.local_search
                 if v.keyword is not None:
                     ocr = cls(v)
-                    if ocr.ocr_match_keyword(screen, ocr.button.keyword, direct_ocr=not local_search, mode=ocr_mode):
-                        match_pos = int((v.area[0] + v.area[2]) / 2), int((v.area[1] + v.area[3]) / 2)
+                    ocr_result = ocr.ocr_match_keyword(screen, ocr.button.keyword, direct_ocr=not local_search, mode=ocr_mode)
+                    if ocr_result:
+                        if local_search:
+                            match_pos = int((v.area[0] + v.area[2]) / 2), int((v.area[1] + v.area[3]) / 2)
+                        else:
+                            x1, y1, x2, y2 = ocr_result[0].area[0], ocr_result[0].area[1], ocr_result[0].area[2], ocr_result[0].area[3]
+                            match_pos = (int((x1 + x2) / 2), int((y1 + y2) / 2))
                         try_log_screen(screen)
                         return match_pos
                 else:

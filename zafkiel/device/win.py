@@ -1,12 +1,23 @@
 from typing import Tuple
 
-from airtest.core.win import Windows
+from airtest.core.win.win import Windows, require_app
 from pyautogui import dragTo, moveTo
 from pytweening import easeOutQuad
 import win32gui
 
 
 class WindowsPlatform(Windows):
+
+    @require_app
+    def is_foreground(self):
+        """
+        Check if the window is currently in foreground
+        
+        Returns:
+            bool: True if the window is in foreground, False otherwise
+        """
+        foreground_hwnd = win32gui.GetForegroundWindow()
+        return foreground_hwnd == self._top_window.handle
 
     def app_is_running(self) -> bool:
         state = self.app.is_process_running()

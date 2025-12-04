@@ -4,8 +4,8 @@ from typing import Callable, Tuple, Type
 from airtest.core.cv import try_log_screen
 from airtest.core.error import TargetNotFoundError
 from airtest.core.helper import logwrap, G
-from airtest.core.settings import Settings as ST
 
+from zafkiel.config import Config
 from zafkiel.logger import logger
 from zafkiel.ocr.ocr import Ocr
 from zafkiel.utils import is_color_similar, crop
@@ -14,7 +14,7 @@ from zafkiel.utils import is_color_similar, crop
 @logwrap
 def loop_find(
         v,
-        timeout: float = ST.FIND_TIMEOUT,
+        timeout: float = Config.ST.FIND_TIMEOUT,
         threshold: float = None,
         interval: float= 0.3,
         interval_func: Callable[[], None] = None,
@@ -41,7 +41,7 @@ def loop_find(
     """
     start_time = time.time()
     while True:
-        screen = G.DEVICE.snapshot(filename=None, quality=ST.SNAPSHOT_QUALITY)
+        screen = G.DEVICE.snapshot(filename=None, quality=Config.ST.SNAPSHOT_QUALITY)
 
         if screen is None:
             logger.warning("Screen is None, may be locked")
@@ -74,6 +74,12 @@ def loop_find(
             interval_func()
 
         if (time.time() - start_time) > timeout:
+            if Config.KEEP_FOREGROUND and not G.DEVICE.is_foreground():
+                logger.info("Bringing application to foreground")
+                G.DEVICE.set_foreground()
+                start_time = time.time()
+                continue
+
             logger.debug(f"<{v.name}> matching failed in {timeout}s")
             try_log_screen(screen)
             raise TargetNotFoundError(f'Picture {v.filepath} not found on screen')

@@ -12,5 +12,7 @@ from zafkiel.timer import Timer
 from zafkiel.report import simple_report
 from zafkiel.logger import logger
 
-
-__version__ = '0.3.0'
+try:
+    from zafkiel._version import version as __version__
+except ImportError:
+    __version__ = "unknown"

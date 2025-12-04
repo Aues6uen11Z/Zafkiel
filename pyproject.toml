@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "zafkiel"
-version = "0.3.0"
+dynamic = ["version"]
 description = "A cross-platform UI automation framework based on Airtest and StarRailCopilot."
 authors = [{name = "Aues6uen11Z"}]
 readme = "README.md"
@@ -21,17 +21,8 @@ dependencies = [
 Homepage = "https://github.com/Aues6uen11Z/Zafkiel"
 
 [project.optional-dependencies]
-dev = ["bumpver", "pip-tools"]
+dev = ["pip-tools"]
 
-[tool.bumpver]
-current_version = "0.3.0"
-version_pattern = "MAJOR.MINOR.PATCH"
-commit_message  = "chore: bump version {old_version} -> {new_version}"
-commit          = true
-tag             = true
-push            = false
-
-[tool.bumpver.file_patterns]
-"pyproject.toml" = ['current_version = "{version}"', 'version = "{version}"']
-"zafkiel/__init__.py" = ["{version}"]
+[tool.setuptools_scm]
+write_to = "zafkiel/_version.py"
 

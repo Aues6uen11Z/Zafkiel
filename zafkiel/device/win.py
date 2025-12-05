@@ -4,6 +4,7 @@ from airtest.core.win.win import Windows, require_app
 from pyautogui import dragTo, moveTo
 from pytweening import easeOutQuad
 import win32gui
+import win32con
 
 
 class WindowsPlatform(Windows):
@@ -11,13 +12,90 @@ class WindowsPlatform(Windows):
     @require_app
     def is_foreground(self):
         """
-        Check if the window is currently in foreground
+        Check if the window has focus and is visible at its center point
+        
+        Uses two-stage detection:
+        1. Check if window has input focus (fast check)
+        2. Verify center point is not covered by other windows
         
         Returns:
-            bool: True if the window is in foreground, False otherwise
+            bool: True if the window has focus and is visible, False otherwise
         """
-        foreground_hwnd = win32gui.GetForegroundWindow()
-        return foreground_hwnd == self._top_window.handle
+        try:
+            target_hwnd = self._top_window.handle
+            
+            # Stage 1: Check if window has input focus
+            if win32gui.GetForegroundWindow() != target_hwnd:
+                return False
+            
+            # Stage 2: Verify center point is not covered by other windows
+            rect = win32gui.GetWindowRect(target_hwnd)
+            center_x = (rect[0] + rect[2]) // 2
+            center_y = (rect[1] + rect[3]) // 2
+            
+            point_hwnd = win32gui.WindowFromPoint((center_x, center_y))
+            
+            # Check if the point belongs to target window or its child
+            current_hwnd = point_hwnd
+            while current_hwnd:
+                if current_hwnd == target_hwnd:
+                    return True
+                try:
+                    parent = win32gui.GetParent(current_hwnd)
+                    if parent == 0:
+                        break
+                    current_hwnd = parent
+                except Exception:
+                    break
+            
+            return False
+        except Exception:
+            return False
+
+    @require_app
+    def set_foreground(self):
+        """
+        Bring window to top of Z-order and set input focus
+        """
+        import win32api
+        import win32process
+        
+        hwnd = self._top_window.handle
+        
+        # Restore if minimized
+        if win32gui.IsIconic(hwnd):
+            win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
+        
+        # Get current foreground window for thread attachment
+        current_fg = win32gui.GetForegroundWindow()
+        current_thread = win32api.GetCurrentThreadId()
+        
+        # Attach to foreground thread if different
+        if current_fg and current_fg != hwnd:
+            try:
+                fg_thread, _ = win32process.GetWindowThreadProcessId(current_fg)
+                if fg_thread != current_thread:
+                    win32process.AttachThreadInput(current_thread, fg_thread, True)
+            except Exception:
+                pass
+        
+        # HWND_TOPMOST trick: force window to top of Z-order
+        win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0,
+                             win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_SHOWWINDOW)
+        win32gui.SetWindowPos(hwnd, win32con.HWND_NOTOPMOST, 0, 0, 0, 0,
+                             win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_SHOWWINDOW)
+        
+        # Set foreground window to gain input focus
+        win32gui.SetForegroundWindow(hwnd)
+        
+        # Detach thread input
+        if current_fg and current_fg != hwnd:
+            try:
+                fg_thread, _ = win32process.GetWindowThreadProcessId(current_fg)
+                if fg_thread != current_thread:
+                    win32process.AttachThreadInput(current_thread, fg_thread, False)
+            except Exception:
+                pass
 
     def app_is_running(self) -> bool:
         state = self.app.is_process_running()

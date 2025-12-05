@@ -75,8 +75,8 @@ def loop_find(
 
         if (time.time() - start_time) > timeout:
             if Config.KEEP_FOREGROUND and not G.DEVICE.is_foreground():
-                time.sleep(3)
-                logger.info("Bringing application to foreground")
+                time.sleep(Config.BUFFER_TIME)
+                logger.info("Window covered by another window, bringing to foreground...")
                 G.DEVICE.set_foreground()
                 start_time = time.time()
                 continue

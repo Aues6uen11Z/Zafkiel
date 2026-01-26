@@ -19,9 +19,10 @@ class WindowsPlatform(Windows):
         """
         Check if the window has focus and is visible at its center point
 
-        Uses two-stage detection:
+        Uses three-stage detection:
         1. Check if window has input focus (fast check)
-        2. Verify center point is not covered by other windows
+        2. Check if window is minimized
+        3. Verify center point is not covered by other windows
 
         Returns:
             bool: True if the window has focus and is visible, False otherwise
@@ -33,7 +34,11 @@ class WindowsPlatform(Windows):
             if win32gui.GetForegroundWindow() != target_hwnd:
                 return False
 
-            # Stage 2: Verify center point is not covered by other windows
+            # Stage 2: Check if window is minimized
+            if win32gui.IsIconic(target_hwnd):
+                return False
+
+            # Stage 3: Verify center point is not covered by other windows
             rect = win32gui.GetWindowRect(target_hwnd)
             center_x = (rect[0] + rect[2]) // 2
             center_y = (rect[1] + rect[3]) // 2

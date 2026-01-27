@@ -1,6 +1,9 @@
+import os
+import time
 from typing import Optional, Tuple, Type, Callable, Union, List
+import threading
 
-from airtest.core.api import *
+from airtest.core.api import connect_device
 from airtest.core.cv import try_log_screen
 from airtest.core.error import TargetNotFoundError
 from airtest.core.helper import G, logwrap, delay_after_operation, set_logdir
@@ -15,6 +18,51 @@ from zafkiel.exception import NotRunningError, ScriptError
 from zafkiel.ocr.ocr import Ocr
 from zafkiel.timer import Timer
 from zafkiel.utils import random_rectangle_point
+
+
+def _connect_device_with_timeout(dev: str, timeout: float = 5) -> bool:
+    """
+    Connect device with timeout to avoid blocking when window is not responding.
+    
+    Args:
+        dev: Device URI string
+        timeout: Timeout in seconds for each connection attempt
+        
+    Returns:
+        True if connected successfully, False if timeout or ElementNotFoundError
+        
+    Raises:
+        Other exceptions from connect_device
+    """
+    result = {"success": False, "error": None}
+    
+    def worker():
+        try:
+            connect_device(dev)
+            result["success"] = True
+        except ElementNotFoundError as e:
+            result["error"] = e
+        except Exception as e:
+            result["error"] = e
+    
+    thread = threading.Thread(target=worker, daemon=True)
+    thread.start()
+    thread.join(timeout)
+    
+    if thread.is_alive():
+        # Thread is still running, connection timed out (likely SendMessage blocking)
+        logger.warning(f"connect_device timed out after {timeout}s, window may not be responding")
+        return False
+    
+    if result["success"]:
+        return True
+    
+    if result["error"]:
+        if isinstance(result["error"], ElementNotFoundError):
+            return False
+        raise result["error"]
+    
+    return False
 
 
 def auto_setup(
@@ -49,13 +97,13 @@ def auto_setup(
     if devices:
         startup_time = Timer(firing_time).start()
         for dev in devices:
+            connected = False
             while not startup_time.reached():
-                try:
-                    connect_device(dev)
+                if _connect_device_with_timeout(dev, timeout=5):
+                    connected = True
                     break
-                except ElementNotFoundError:
-                    time.sleep(3)
-            if startup_time.reached():
+                time.sleep(3)
+            if not connected:
                 raise NotRunningError(dev)
     if logdir:
         logdir = script_log_dir(basedir, logdir)

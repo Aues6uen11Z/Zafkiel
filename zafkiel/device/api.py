@@ -3,7 +3,7 @@ import time
 from typing import Optional, Tuple, Type, Callable, Union, List
 import threading
 
-from airtest.core.api import connect_device
+from airtest.core.api import *
 from airtest.core.cv import try_log_screen
 from airtest.core.error import TargetNotFoundError
 from airtest.core.helper import G, logwrap, delay_after_operation, set_logdir
